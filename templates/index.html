@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SECOP II · Buscador por categoría</title>
+
+  <!-- Fuente moderna -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    
+    :root{
+      --bg: #0b0c10;
+      --surface: #111218;
+      --panel: #ffffff;
+      --text: #101828;
+      --subtext: #667085;
+      --brand-600: #a2c037;
+      --brand:#b7d93d;
+      --border:#e5e7eb;
+      --muted:#f8fafc;
+      --positive:#12b76a;
+      --chip:#eef4ff;
+      --chip-text: rgb(250, 184, 0);
+      --row-zebra:#fafafa;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b0c10;
+        --surface:#111218;
+        --panel:#171923;
+        --text:#f3f4f6;
+        --subtext:#A3A8B3;
+        --brand:#4c8dff;
+        --brand-600:#3b74d9;
+        --border:#262a36;
+        --muted:#0f1117;
+        --chip:#0f1b33;
+        --chip-text:#bcd3ff;
+        --row-zebra:#12141b;
+      }
+    }
+
+    *{ box-sizing: border-box }
+    html,body{ height:100% }
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--muted), #fff);
+    }
+    @media (prefers-color-scheme: dark){
+      body{ background: linear-gradient(180deg, #0b0c10, #0d0f15) }
+    }
+
+    .container{
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .appbar{
+      position: sticky;
+      top:0;
+      z-index: 50;
+      backdrop-filter: saturate(180%) blur(8px);
+      background: color-mix(in srgb, var(--panel) 88%, transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .appbar-inner{
+      max-width:1200px; margin:0 auto; padding:14px 24px; display:flex; align-items:center; gap:14px; justify-content:space-between;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; font-weight:600; letter-spacing:.2px;
+    }
+
+
+    /* Search panel */
+    .panel{
+      background: var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding: 18px;
+      display:flex; flex-wrap:wrap; align-items:center; gap:12px;
+      box-shadow: 0 8px 30px rgba(16,24,40,.06);
+    }
+    .panel h2{
+      margin:0 0 6px 0; font-size:18px; font-weight:600;
+    }
+    .sub{
+      color:var(--subtext); font-size:13px;
+    }
+    .panel-grid{ width:100%; display:grid; grid-template-columns: 1fr auto; gap:12px; align-items:center }
+    @media (max-width:720px){ .panel-grid{ grid-template-columns: 1fr } }
+
+    .input{
+      width:100%;
+      display:flex; align-items:center; gap:10px;
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, #fff, var(--muted));
+      border-radius:12px; padding:10px 12px;
+    }
+    @media (prefers-color-scheme: dark){
+      .input{ background: linear-gradient(180deg, #0f1117, #10131c) }
+    }
+    .input input{
+      flex:1; border:none; outline:none; background:transparent; color:var(--text); font-size:14px;
+    }
+    .hint{
+      background: var(--chip); color: var(--chip-text);
+      border-radius: 999px; padding: 6px 10px; font-size:12px; font-weight:600;
+    }
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 10px 16px;
+      background: var(--brand);
+      color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer;
+      box-shadow: 0 6px 16px rgba(10,102,255,.25);
+      transition: transform .05s ease, background .15s ease;
+    }
+    .btn:hover{ background: var(--brand-600) }
+    .btn:active{ transform: translateY(1px) }
+
+    /* Results meta */
+    .meta{
+      margin-top: 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+      color: var(--subtext); font-size:13px;
+    }
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; background: var(--chip); color: var(--chip-text); border-radius: 999px; font-weight:600; font-size:12px;
+    }
+
+    /* Table */
+    .table-wrap{
+      margin-top:16px;
+      overflow:auto;
+      border:1px solid var(--border); border-radius:14px;
+      background: var(--panel);
+      box-shadow: 0 8px 30px rgba(16,24,40,.06);
+    }
+    table{ width:100%; border-collapse:separate; border-spacing:0; min-width:860px }
+    thead th{
+      position: sticky; top:0; z-index:5;
+      background: color-mix(in srgb, var(--panel) 95%, transparent);
+      backdrop-filter: blur(6px);
+      text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--subtext);
+      padding:12px 14px; border-bottom:1px solid var(--border);
+    }
+    tbody td{
+      padding:14px; border-bottom:1px solid var(--border); vertical-align:top; font-size:14px;
+    }
+    tbody tr:nth-child(even){ background: var(--row-zebra) }
+    tbody tr:hover{ background: color-mix(in srgb, var(--row-zebra) 70%, transparent) }
+
+    .entity{ font-weight:600 }
+    .desc{
+      color: var(--text);
+     
+      max-width: 560px;
+    }
+    .muted{ color: var(--subtext) }
+    .price{ font-feature-settings:"tnum" 1, "cv04" 1; white-space:nowrap; font-weight:600 }
+    .code{ font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* Empty state */
+    .empty{
+      text-align:center; padding:48px 24px; color:var(--subtext);
+    }
+    .empty strong{ color:var(--text) }
+.panel-grid{ width:100%; display:grid; grid-template-columns: 1fr 220px auto; gap:12px; align-items:center }
+@media (max-width:720px){ .panel-grid{ grid-template-columns: 1fr } }
+
+  </style>
+
+</head>
+<body>
+  <header class="appbar">
+    <div class="appbar-inner">
+      <div class="brand">
+        <img style="width: 150px" src="https://ecolite.com.co/wp-content/uploads/2023/04/logo-ecolite.png" alt="">
+      </div>
+      <div class="hint">Versión 1</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Search Panel -->
+    <section class="panel" aria-label="Búsqueda">
+      <div style="flex:1; min-width:260px">
+        <h2>Búsqueda por código de categoría</h2>
+        <div class="sub">Escribe uno o varios códigos UNSPSC (separados por coma). Se mostrarán todos los resultados.</div>
+      </div>
+
+<form method="get" class="panel-grid" role="search" aria-label="Buscar procesos">
+  <div class="input" aria-live="polite">
+    <input name="codigos" type="text" inputmode="numeric"
+           value="{{ codigos or '' }}"
+           placeholder="Ej.: 85121600, 43211503, 30200000"
+           aria-label="Códigos de categoría separados por coma" />
+  </div>
+
+  <div class="input">
+    <select name="estado" aria-label="Estado del procedimiento" style="width:100%; background:transparent; border:none; color:var(--text);">
+      <option value="" {{ 'selected' if not estado }}>Todos los estados</option>
+      <!-- Opciones comunes; la comparación es case-insensitive en el backend -->
+      <option value="Seleccionado" {{ 'selected' if (estado and 'Seleccionado' in estado|lower) }}>Seleccionado</option>
+      <option value="Evaluación" {{ 'selected' if (estado and 'Evaluación' in estado|lower) }}>Evaluación</option>
+      <option value="Publicado" {{ 'selected' if (estado and 'Publicado' in estado|lower) }}>Publicado</option>
+      <option value="Abierto" {{ 'selected' if (estado and 'Abierto' in estado|lower) }}>Abierto</option>
+      <option value="Cancelado" {{ 'selected' if (estado and 'Cancelado' in estado|lower) }}>Cancelado</option>
+      <option value="Adjudicado" {{ 'selected' if (estado and 'Adjudicado' in estado|lower) }}>Adjudicado</option>
+    </select>
+  </div>
+
+    <div class="input">
+    <select name="orden" aria-label="Ordenar por" style="width:100%; background:transparent; border:none; color:var(--text);">
+      <option value="recientes" {{ 'selected' if (orden=='recientes' or not orden) }}>Más recientes</option>
+      <option value="antiguos"  {{ 'selected' if orden=='antiguos' }}>Más antiguos</option>
+      <option value="mayor_valor" {{ 'selected' if orden=='mayor_valor' }}>Mayor valor</option>
+      <option value="menor_valor" {{ 'selected' if orden=='menor_valor' }}>Menor valor</option>
+    </select>
+  </div>
+
+  <button class="btn" type="submit" aria-label="Buscar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M21 21l-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    Buscar
+  </button>
+</form>
+
+
+      <div class="meta">
+        <div class="badge" title="Resultados encontrados">
+          <!-- ícono -->
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M20 7l-9 9-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {{ (data|length) if data else 0 }} resultados
+        </div>
+        <div class="sub">Campos: Entidad, Ciudad, Departamento, Descripción, Valor estimado y Código UNSPSC.</div>
+      </div>
+    </section>
+
+    <!-- Results Table -->
+    <section class="table-wrap" aria-label="Resultados">
+      <table role="table">
+        <thead>
+          <tr role="row">
+            <th scope="col">Código</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Entidad</th>
+            <th scope="col">Departamento</th>
+            <th scope="col" style="min-width:360px">Descripción</th>
+            <th scope="col">Valor</th>
+            <th scope="col">Fecha Publicación</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if data and data|length > 0 %}
+            {% for item in data %}
+              <tr role="row">
+                                <td class="code">
+                  {% if item.codigo_principal_de_categoria %}
+                    {{ item.codigo_principal_de_categoria.replace("V1.", "") }}
+                  {% else %}
+                    N/A
+                  {% endif %}
+                </td>
+                <td class="entity">{{ item.estado_del_procedimiento or "N/A" }}</td>
+                <td class="entity">{{ item.entidad or "N/A" }}</td>
+                <td class="muted">{{ item.departamento_entidad or "N/A" }}</td>
+
+                <td class="desc" title="{{ (item.descripcion_del_proceso or item.descripci_n_del_procedimiento or item.detalle_objeto) or 'N/A' }}">
+                  {{ (item.descripcion_del_proceso or item.descripci_n_del_procedimiento or item.detalle_objeto) or "N/A" }}
+                </td>
+
+                <td class="price">
+                  {% set _valor = item.precio_base or item.valor_estimado %}
+                  {% if _valor %}
+                    ${{ "{:,.0f}".format((_valor|string)|replace(".", "")|replace(",", "")|int).replace(",", ".") }}
+                  {% else %}
+                    $0
+                  {% endif %}
+                </td>
+
+                <td class="muted">
+          {% if item.fecha_de_publicacion_del %}
+            {{ item.fecha_de_publicacion_del[:10] }}
+          {% else %}
+            N/A
+          {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+          
+            <tr>
+              <td colspan="6" class="empty">
+                <div><strong>Sin resultados.</strong> Intenta con otros códigos o verifica la escritura.</div>
+                <div class="sub" style="margin-top:6px">Tip: puedes poner varios separados por coma, p. ej. <code>85121600, 43211503</code>.</div>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+        
+      </table>
+      
+    </section>
+    {% if codigos %}
+  <div class="pagination" style="margin-top:20px; display:flex; justify-content:center; gap:10px;">
+    {% if page > 1 %}
+      <a class="btn" style="text-decoration: none;" href="/?codigos={{ codigos }}&page={{ page - 1 }}">Anterior</a>
+    {% endif %}
+    <span class="badge">Página {{ page }}</span>
+    {% if data and data|length == 10 %}
+      <a class="btn" style="text-decoration: none;" href="/?codigos={{ codigos }}&page={{ page + 1 }}">Siguiente</a>
+    {% endif %}
+  </div>
+{% endif %}
+
+  </main>
+</body>
+</html>
