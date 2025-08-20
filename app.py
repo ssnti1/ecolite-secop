@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import requests
+import requests, re
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -9,13 +9,20 @@ templates = Jinja2Templates(directory="templates")
 API_URL = "https://www.datos.gov.co/resource/p6dx-8zbt.json"
 
 def soql_escape(v: str) -> str:
+    # Escapa comillas simples
     return v.replace("'", "''")
+
+def sanitize_like_term(v: str) -> str:
+    # Elimina comodines que podrían romper el LIKE en SoQL
+    v = v.replace("%", "").replace("_", "")
+    return soql_escape(v)
 
 @app.get("/", response_class=HTMLResponse)
 def home(
     request: Request,
     codigos: str | None = Query(None, description="Códigos UNSPSC separados por comas"),
     estado: str | None = Query(None, description="Estado del procedimiento (uno o varios, separados por comas)"),
+    texto: str | None = Query(None, description="Palabras clave a buscar en la descripción"),
     orden: str = Query("recientes", description="recientes|antiguos|mayor_valor|menor_valor"),
     page: int = Query(1, ge=1),
 ):
@@ -25,7 +32,7 @@ def home(
 
     condiciones = []
 
-    # --- Códigos ---
+    # ---- Códigos ----
     if codigos:
         lista_codigos = []
         for c in codigos.split(","):
@@ -39,7 +46,7 @@ def home(
             in_list = ", ".join(f"'{c}'" for c in lista_codigos)
             condiciones.append(f"codigo_principal_de_categoria IN ({in_list})")
 
-    # --- Estado (case-insensitive) ---
+    # ---- Estado (case-insensitive) ----
     if estado:
         estados = [e.strip() for e in estado.split(",") if e.strip()]
         if estados:
@@ -47,11 +54,27 @@ def home(
             in_list = ", ".join(f"'{e}'" for e in estados_upper)
             condiciones.append(f"UPPER(estado_del_procedimiento) IN ({in_list})")
 
-    # --- Orden ---
+    # ---- Texto en descripción (case-insensitive, AND entre términos; OR entre campos) ----
+    if texto:
+        # separa por espacios o comas; ignora cadenas vacías
+        terms = [t for t in re.split(r"[,\s]+", texto) if t]
+        if terms:
+            fields = [
+                "descripci_n_del_procedimiento"
+            ]
+            term_clauses = []
+            for t in terms:
+                t_clean = sanitize_like_term(t).upper()
+                # (UPPER(campo1) LIKE '%T%' OR UPPER(campo2) LIKE '%T%' OR ...)
+                ors = [f"UPPER({f}) LIKE '%{t_clean}%'" for f in fields]
+                term_clauses.append("(" + " OR ".join(ors) + ")")
+            # AND entre cada término para que todos aparezcan
+            condiciones.append(" AND ".join(term_clauses))
+
+    # ---- Orden ----
     order_map = {
         "recientes": "fecha_de_publicacion_del DESC",
         "antiguos": "fecha_de_publicacion_del ASC",
-        # usa ambos campos de monto por si uno viene nulo
         "mayor_valor": "precio_base DESC, valor_estimado DESC",
         "menor_valor": "precio_base ASC, valor_estimado ASC",
     }
@@ -74,5 +97,6 @@ def home(
         "page": page,
         "codigos": codigos,
         "estado": estado,
-        "orden": orden,  # <— recordar selección en el UI
+        "texto": texto,   # <- recordar lo tecleado en el UI
+        "orden": orden,
     })

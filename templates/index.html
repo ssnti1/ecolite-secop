@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SECOP II · Buscador por categoría</title>
+  <title>ecolite · SECOP</title>
 
   <!-- Fuente moderna -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
     
     :root{
@@ -196,11 +197,20 @@
       </div>
 
 <form method="get" class="panel-grid" role="search" aria-label="Buscar procesos">
-  <div class="input" aria-live="polite">
+  <!-- Códigos -->
+  <div class="input">
     <input name="codigos" type="text" inputmode="numeric"
            value="{{ codigos or '' }}"
            placeholder="Ej.: 85121600, 43211503, 30200000"
-           aria-label="Códigos de categoría separados por coma" />
+           aria-label="Códigos de categoría" />
+  </div>
+
+  <!-- Palabras clave -->
+  <div class="input">
+    <input name="texto" type="text"
+           value="{{ texto or '' }}"
+           placeholder="Palabras clave en descripción (p. ej. hospital, software)"
+           aria-label="Palabras clave en la descripción" />
   </div>
 
   <div class="input">
@@ -216,7 +226,8 @@
     </select>
   </div>
 
-    <div class="input">
+  <!-- Orden -->
+  <div class="input">
     <select name="orden" aria-label="Ordenar por" style="width:100%; background:transparent; border:none; color:var(--text);">
       <option value="recientes" {{ 'selected' if (orden=='recientes' or not orden) }}>Más recientes</option>
       <option value="antiguos"  {{ 'selected' if orden=='antiguos' }}>Más antiguos</option>
@@ -225,13 +236,9 @@
     </select>
   </div>
 
-  <button class="btn" type="submit" aria-label="Buscar">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M21 21l-4.2-4.2M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    Buscar
-  </button>
+  <button class="btn" type="submit" aria-label="Buscar">Buscar</button>
 </form>
+
 
 
       <div class="meta">
@@ -269,7 +276,9 @@
                     {{ item.codigo_principal_de_categoria.replace("V1.", "") }}
                   {% else %}
                     N/A
-                  {% endif %}
+                  {% endif %} <br>
+                  {{ item.referencia_del_proceso or "N/A" }}
+
                 </td>
                 <td class="entity">{{ item.estado_del_procedimiento or "N/A" }}</td>
                 <td class="entity">{{ item.entidad or "N/A" }}</td>
