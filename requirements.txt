@@ -1,4 +1,5 @@
 fastapi
-uvicorn[standard]
-jinja2
+uvicorn
 requests
+jinja2
+openpyxl
