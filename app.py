@@ -67,25 +67,32 @@ def build_where_and_order(codigos: str | None, estado: str | None, texto: str | 
 @app.get("/", response_class=HTMLResponse)
 def home(
     request: Request,
-    codigos: str | None = Query(None),
-    estado: str | None = Query(None),
-    texto: str | None = Query(None),
-    orden: str = Query("recientes"),
+    codigos: str | None = Query(None, description="Códigos UNSPSC separados por comas"),
+    estado: str | None = Query(None, description="Estado del procedimiento (uno o varios, separados por comas)"),
+    texto: str | None = Query(None, description="Palabras clave a buscar en la descripción"),
+    orden: str = Query("recientes", description="recientes|antiguos|mayor_valor|menor_valor"),
     page: int = Query(1, ge=1),
 ):
-    limit = 10
+    limit = 20   # 👈 ahora son 20 resultados por página
     offset = (page - 1) * limit
 
+    # construyes filtros y orden
     where_clause, order_clause = build_where_and_order(codigos, estado, texto, orden)
 
-    params = {"$limit": limit, "$offset": offset, "$order": order_clause}
-    if where_clause:
-        params["$where"] = where_clause
-
     data = []
-    resp = requests.get(API_URL, params=params, timeout=20)
-    if resp.status_code == 200:
-        data = resp.json()
+
+    # 👇 aquí está el cambio importante
+    if where_clause:   # solo hace la consulta si hay filtros (códigos, estado o texto)
+        params = {
+            "$limit": limit,
+            "$offset": offset,
+            "$order": order_clause,
+            "$where": where_clause,
+        }
+
+        resp = requests.get(API_URL, params=params, timeout=20)
+        if resp.status_code == 200:
+            data = resp.json()
 
     return templates.TemplateResponse("index.html", {
         "request": request,
@@ -96,6 +103,7 @@ def home(
         "texto": texto,
         "orden": orden,
     })
+
 
 def _to_cell(v):
     if v is None:
