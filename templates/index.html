@@ -329,8 +329,15 @@
     {% if data and data|length == 10 %}
       <a class="btn" style="text-decoration: none;" href="/?codigos={{ codigos }}&page={{ page + 1 }}">Siguiente</a>
     {% endif %}
-  </div>
+
 {% endif %}
+<a class="btn" style="text-decoration: none;"" href="/export?codigos={{ codigos or '' }}&estado={{ estado or '' }}&texto={{ texto or '' }}&orden={{ orden or 'recientes' }}&page={{ page }}&limit=1000">
+  Exportar a excel
+</a>
+  </div>
+
+
+
 
   </main>
 </body>
